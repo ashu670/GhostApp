@@ -4,12 +4,14 @@ const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
 const connectDB = require("./config/db");
+// const helmet = require("helmet");
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: true,
+    credentials: true,
   },
 });
 app.set("io", io);
@@ -17,7 +19,13 @@ app.set("io", io);
 connectDB();
 
 // Middleware
-app.use(cors());
+// app.use(helmet({
+//   crossOriginResourcePolicy: false,
+// }));
+app.use(cors({
+  origin: true,
+  credentials: true,
+}));
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 app.use("/api/auth", require("./routes/authRoutes"));

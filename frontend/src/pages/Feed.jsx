@@ -141,7 +141,7 @@ export default function Feed() {
         <div className="upload-card-dash">
           <div className="post-avatar" style={{ width: '36px', height: '36px', fontSize: '14px' }}>
             {user?.profilePic ? (
-              <img src={`http://localhost:5000/uploads/${user.profilePic}`} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+              <img src={`${import.meta.env.VITE_API_URL}/uploads/${user.profilePic}`} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
             ) : (
               user?.username?.charAt(0) || "U"
             )}
@@ -184,7 +184,7 @@ export default function Feed() {
               <div className="post-user-info">
                 <div className="post-avatar">
                   {post.user.profilePic ? (
-                    <img src={`http://localhost:5000/uploads/${post.user.profilePic}`} alt={post.user.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                    <img src={`${import.meta.env.VITE_API_URL}/uploads/${post.user.profilePic}`} alt={post.user.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                   ) : (
                     post.user.username.charAt(0)
                   )}
@@ -216,13 +216,13 @@ export default function Feed() {
                   {post.media.match(/\.(mp4|webm|ogg)$/) ? (
                     <video
                       className="post-media"
-                      src={`http://localhost:5000/uploads/${post.media}`}
+                      src={`${import.meta.env.VITE_API_URL}/uploads/${post.media}`}
                       controls
                     />
                   ) : (
                     <img
                       className="post-media"
-                      src={`http://localhost:5000/uploads/${post.media}`}
+                      src={`${import.meta.env.VITE_API_URL}/uploads/${post.media}`}
                       alt="Post media"
                     />
                   )}
@@ -250,7 +250,7 @@ export default function Feed() {
                       <div className="comment-item" key={i}>
                         <div className="comment-avatar">
                           {c.user?.profilePic ? (
-                            <img src={`http://localhost:5000/uploads/${c.user.profilePic}`} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                            <img src={`${import.meta.env.VITE_API_URL}/uploads/${c.user.profilePic}`} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                           ) : (
                             c.user?.username?.charAt(0) || "U"
                           )}

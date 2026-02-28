@@ -6,6 +6,7 @@ import ChatInput from "../components/chat/ChatInput";
 import MessageBubble from "../components/chat/MessageBubble";
 import formatTime from "../utils/formatTime";
 import "./Chat.css";
+import socketInstance from "../socket";
 
 export default function Chat() {
   const { user } = useContext(AuthContext);
@@ -28,27 +29,31 @@ export default function Chat() {
 
   // Connect socket
   useEffect(() => {
-    const newSocket = io("http://localhost:5000", {
-      auth: {
-        token: localStorage.getItem("token"),
-      },
-    });
+    const token = localStorage.getItem("token");
+    if (token) {
+      socketInstance.auth = { token };
+      socketInstance.connect();
+    }
 
-    setSocket(newSocket);
+    setSocket(socketInstance);
 
-    newSocket.on("receiveMessage", (msg) => {
+    socketInstance.on("receiveMessage", (msg) => {
       setMessages((prev) => [...prev, msg]);
     });
 
-    newSocket.on("messageEdited", (updatedMsg) => {
+    socketInstance.on("messageEdited", (updatedMsg) => {
       setMessages((prev) => prev.map(m => m._id === updatedMsg._id ? updatedMsg : m));
     });
 
-    newSocket.on("messageDeleted", (updatedMsg) => {
+    socketInstance.on("messageDeleted", (updatedMsg) => {
       setMessages((prev) => prev.map(m => m._id === updatedMsg._id ? updatedMsg : m));
     });
 
-    return () => newSocket.close();
+    return () => {
+      socketInstance.off("receiveMessage");
+      socketInstance.off("messageEdited");
+      socketInstance.off("messageDeleted");
+    };
   }, []);
 
   // Fetch all users
@@ -146,7 +151,7 @@ export default function Chat() {
             >
               <div className="user-avatar">
                 {u.profilePic ? (
-                  <img src={`http://localhost:5000/uploads/${u.profilePic}`} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                  <img src={`${import.meta.env.VITE_API_URL}/uploads/${u.profilePic}`} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                 ) : (
                   u.username.charAt(0)
                 )}
@@ -171,7 +176,7 @@ export default function Chat() {
               </button>
               <div className="user-avatar" style={{ width: '36px', height: '36px' }}>
                 {selectedUser.profilePic ? (
-                  <img src={`http://localhost:5000/uploads/${selectedUser.profilePic}`} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                  <img src={`${import.meta.env.VITE_API_URL}/uploads/${selectedUser.profilePic}`} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                 ) : (
                   selectedUser.username.charAt(0)
                 )}

@@ -53,7 +53,7 @@ export default function MessageBubble({ message, isOwn, onEdit, onDelete }) {
         // For backward compatibility with older string-based media
         if (!isObject) {
             const isVideo = message.media.match(/\.(mp4|webm|ogg)$/i);
-            const url = `http://localhost:5000/uploads/${message.media}`;
+            const url = `${import.meta.env.VITE_API_URL}/uploads/${message.media}`;
             return isVideo ? (
                 <video src={url} controls className="message-media" />
             ) : (
@@ -65,10 +65,10 @@ export default function MessageBubble({ message, isOwn, onEdit, onDelete }) {
         const { type, url } = message.media;
 
         if (type === "video") {
-            return <video src={`http://localhost:5000/uploads/${url}`} controls className="message-media" />;
+            return <video src={`${import.meta.env.VITE_API_URL}/uploads/${url}`} controls className="message-media" />;
         }
         if (type === "image") {
-            return <img src={`http://localhost:5000/uploads/${url}`} alt="Image" className="message-media" loading="lazy" />;
+            return <img src={`${import.meta.env.VITE_API_URL}/uploads/${url}`} alt="Image" className="message-media" loading="lazy" />;
         }
         if (type === "gif") {
             return <img src={url} alt="GIF" className="message-media gif-media" loading="lazy" />;
