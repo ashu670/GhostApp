@@ -146,7 +146,7 @@ VITE_API_URL=http://localhost:5000
 ## 💻 Local Development
 
 ### 1️⃣ Clone Repository
-git clone https://github.com/yourusername/ghostapp.git
+git clone https://github.com/ashu670/ghostapp.git
 
 cd ghostapp
 
