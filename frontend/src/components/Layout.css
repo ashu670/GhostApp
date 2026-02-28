@@ -1,0 +1,92 @@
+.layout-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background-color: var(--bg-primary);
+    position: relative;
+    /* Ensure overlay covers everything */
+}
+
+/* Mobile Header */
+.mobile-header {
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+}
+
+.mobile-header-btn {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    cursor: pointer;
+}
+
+.mobile-header-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.mobile-header-brand {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* Mobile Overlay */
+.mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 50;
+    /* Needs to be below the drawers but above the main content */
+    backdrop-filter: blur(2px);
+}
+
+.layout-main {
+    flex: 1;
+    height: 100vh;
+    overflow-y: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Scrollbar hiding for main content area to keep it clean like the mock */
+.layout-main::-webkit-scrollbar {
+    display: none;
+}
+
+.layout-main {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Mobile responsive handling */
+@media (max-width: 1024px) {
+    .layout-container {
+        flex-direction: column;
+    }
+
+    .mobile-header {
+        display: flex;
+    }
+
+    .layout-main {
+        height: calc(100vh - 65px);
+        /* Header height approx */
+    }
+}

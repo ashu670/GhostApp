@@ -1,0 +1,112 @@
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.auth-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: var(--shadow-lg);
+}
+
+.auth-card h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.auth-subtitle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 32px;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.form-input {
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    font-size: 14px;
+    transition: all var(--transition-fast);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+.auth-submit {
+    background-color: var(--text-primary);
+    color: var(--bg-primary);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    font-weight: 600;
+    font-size: 14px;
+    margin-top: 8px;
+    transition: transform var(--transition-fast);
+}
+
+.auth-submit:hover {
+    transform: scale(1.02);
+}
+
+.auth-submit:active {
+    transform: scale(0.98);
+}
+
+.auth-toggle {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.auth-toggle-link {
+    color: var(--text-primary);
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 4px;
+    transition: color var(--transition-fast);
+}
+
+.auth-toggle-link:hover {
+    color: var(--accent);
+}
+
+.error-message {
+    color: #ef4444;
+    font-size: 13px;
+    text-align: center;
+    background: rgba(239, 68, 68, 0.1);
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 16px;
+}
