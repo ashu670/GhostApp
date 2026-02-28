@@ -17,11 +17,11 @@ export default function Login() {
 
     try {
       if (isLogin) {
-        const res = await api.post("/auth/login", { email, password });
+        const res = await api.post("/api/auth/login", { email, password });
         login(res.data);
         window.location.href = "/chat";
       } else {
-        const res = await api.post("/auth/register", { username, email, password });
+        const res = await api.post("/api/auth/register", { username, email, password });
         login(res.data);
         window.location.href = "/chat";
       }
