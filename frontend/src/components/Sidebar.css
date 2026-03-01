@@ -164,4 +164,9 @@
     .layout-sidebar.open {
         transform: translateX(0);
     }
+
+    /* Ensure it respects chat hidden class */
+    .chat-sidebar.mobile-hidden {
+        display: none !important;
+    }
 }

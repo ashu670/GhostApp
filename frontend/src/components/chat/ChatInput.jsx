@@ -21,14 +21,7 @@ const Icons = {
             <line x1="15" y1="9" x2="15.01" y2="9" />
         </svg>
     ),
-    Gif: () => (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
-            <rect x="2" y="5" width="20" height="14" rx="2" ry="2" />
-            <path d="M7 10h-2v4h2" />
-            <line x1="12" y1="10" x2="12" y2="14" />
-            <path d="M17 10h-2v4" />
-        </svg>
-    ),
+
     Sticker: () => (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
             <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
@@ -60,6 +53,15 @@ export default function ChatInput({ onSendMessage }) {
     const [activePicker, setActivePicker] = useState(null); // 'emoji', 'gif', 'sticker'
     const fileInputRef = useRef(null);
     const wrapperRef = useRef(null);
+    const textareaRef = useRef(null);
+
+    // Auto-resize textarea
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto'; // Reset height to recalculate
+            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+        }
+    }, [text]);
 
     // Close pickers on outside click
     useEffect(() => {
@@ -91,11 +93,6 @@ export default function ChatInput({ onSendMessage }) {
     const handleEmojiSelect = (emoji) => {
         setText((prev) => prev + emoji);
         // Don't auto-close emoji picker, let user pick multiple
-    };
-
-    const handleGifSelect = (url) => {
-        onSendMessage({ text: "", mediaType: "gif", mediaUrl: url });
-        setActivePicker(null);
     };
 
     const handleStickerSelect = (url) => {
@@ -140,7 +137,6 @@ export default function ChatInput({ onSendMessage }) {
             {/* Popovers */}
             <div className="pickers-container">
                 {activePicker === "emoji" && <EmojiPicker onSelect={handleEmojiSelect} />}
-                {activePicker === "gif" && <GifPicker onSelect={handleGifSelect} />}
                 {activePicker === "sticker" && <StickerPanel onSelect={handleStickerSelect} />}
             </div>
 
@@ -168,13 +164,7 @@ export default function ChatInput({ onSendMessage }) {
                     >
                         <Icons.Sticker />
                     </button>
-                    <button
-                        className={`action-icon-btn ${activePicker === 'gif' ? 'active' : ''}`}
-                        onClick={() => setActivePicker(activePicker === 'gif' ? null : 'gif')}
-                        title="GIFs"
-                    >
-                        <Icons.Gif />
-                    </button>
+
                     <button
                         className={`action-icon-btn ${activePicker === 'emoji' ? 'active' : ''}`}
                         onClick={() => setActivePicker(activePicker === 'emoji' ? null : 'emoji')}
@@ -187,12 +177,14 @@ export default function ChatInput({ onSendMessage }) {
                 {/* Text Area */}
                 <div className="chat-input-box">
                     <textarea
+                        ref={textareaRef}
                         value={text}
                         onChange={(e) => setText(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder={file ? "Add a caption... (optional)" : "Type a message..."}
                         rows={1}
                         disabled={!!file && false} // we could disable text if file is present based on UX rules, but ghostapp allows both
+                        style={{ overflowY: textareaRef.current?.scrollHeight > 120 ? 'auto' : 'hidden' }}
                     />
 
                     <button

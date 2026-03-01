@@ -181,9 +181,10 @@
 
 /* Inherit existing Chat.css bubble styles for seamless transition */
 .message-wrapper .message-bubble {
-    max-width: 65%;
-    padding: 12px 16px;
-    border-radius: 18px;
+    max-width: 75%;
+    /* Updated to 75% for better mobile readable length */
+    padding: 10px 14px;
+    border-radius: 16px;
     font-size: 15px;
     line-height: 1.4;
     word-break: break-word;
@@ -192,15 +193,20 @@
 .message-wrapper.own .message-bubble {
     background-color: var(--accent);
     color: #ffffff;
+    border-top-right-radius: 4px;
     border-bottom-right-radius: 4px;
-    box-shadow: 0 4px 12px rgba(108, 92, 231, 0.2);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .message-wrapper.other .message-bubble {
-    background-color: var(--bg-surface-dark);
+    background-color: #1a1a1a;
+    /* Distinct dark grey for received messages */
     color: var(--text-primary);
-    border: 1px solid var(--border-color);
+    border: none;
+    /* Clean native look */
+    border-top-left-radius: 4px;
     border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Message Actions floating menu */

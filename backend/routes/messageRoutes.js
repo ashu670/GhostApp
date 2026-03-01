@@ -32,6 +32,44 @@ const upload = multer({
   },
 });
 
+// GET RECENT CONVERSATIONS (For sorting User list)
+router.get("/conversations/recent", auth, async (req, res) => {
+  try {
+    const conversations = await Conversation.find({
+      members: { $in: [req.user._id] }
+    });
+
+    if (!conversations.length) {
+      return res.json([]);
+    }
+
+    // Since we need to sort by lastMessageAt which isn't directly on Conversation model in current shape,
+    // we fetch the latest message for each.
+    const recentConvos = [];
+
+    for (const conv of conversations) {
+      const latestMessage = await Message.findOne({ conversationId: conv._id })
+        .sort({ createdAt: -1 })
+        .limit(1);
+
+      const recipientId = conv.members.find(m => m.toString() !== req.user._id.toString());
+
+      recentConvos.push({
+        conversationId: conv._id,
+        recipientId,
+        lastMessageAt: latestMessage ? latestMessage.createdAt : conv.createdAt
+      });
+    }
+
+    // Sort descending by activity
+    recentConvos.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt));
+
+    res.json(recentConvos);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // CREATE OR GET CONVERSATION
 router.post("/conversation", auth, async (req, res) => {
   try {
