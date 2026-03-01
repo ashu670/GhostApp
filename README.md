@@ -7,8 +7,7 @@ It includes authentication, posts, engagement features, real-time messaging, med
 
 ## 🚀 Live Demo
 
-Frontend: https://your-frontend-url.vercel.app  
-Backend API: https://your-backend-url.onrender.com  
+https://ghost-app-psi.vercel.app/
 
 ---
 
