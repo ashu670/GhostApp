@@ -2,20 +2,14 @@ const express = require("express");
 const auth = require("../middleware/authMiddleware");
 const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
+const uploadToCloudinary = require("../utils/uploadToCloudinary");
 
 const multer = require("multer");
 
 const router = express.Router();
 
 // Storage config for messages
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -106,9 +100,10 @@ router.post("/", auth, upload.single("media"), async (req, res) => {
     } else if (req.file) {
       // It's a standard Multer file upload (image/video)
       const type = req.file.mimetype.startsWith("video/") ? "video" : "image";
+      const result = await uploadToCloudinary(req.file.buffer, "ghostapp_chat");
       finalMedia = {
         type,
-        url: req.file.filename,
+        url: result.secure_url,
       };
     }
 

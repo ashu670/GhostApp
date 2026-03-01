@@ -2,18 +2,12 @@ const express = require("express");
 const multer = require("multer");
 const auth = require("../middleware/authMiddleware");
 const Post = require("../models/Post");
+const uploadToCloudinary = require("../utils/uploadToCloudinary");
 
 const router = express.Router();
 
 // Storage config
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -34,9 +28,14 @@ const upload = multer({
 router.post("/", auth, upload.single("media"), async (req, res) => {
   try {
     const { caption } = req.body;
-    const media = req.file ? req.file.filename : null;
 
-    if (!caption?.trim() && !media) {
+    let mediaUrl = null;
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.buffer, "ghostapp_posts");
+      mediaUrl = result.secure_url;
+    }
+
+    if (!caption?.trim() && !mediaUrl) {
       return res.status(400).json({ message: "Post cannot be completely empty." });
     }
 
@@ -45,8 +44,8 @@ router.post("/", auth, upload.single("media"), async (req, res) => {
       caption: caption || "",
     };
 
-    if (media) {
-      postData.media = media;
+    if (mediaUrl) {
+      postData.media = mediaUrl;
     }
 
     const post = await Post.create(postData);

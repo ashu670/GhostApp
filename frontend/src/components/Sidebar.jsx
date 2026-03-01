@@ -66,7 +66,7 @@ export default function Sidebar({ isOpen }) {
                 <div className="user-profile-info">
                     <div className="user-profile-avatar">
                         {user?.profilePic ? (
-                            <img src={`${import.meta.env.VITE_API_URL}/uploads/${user.profilePic}`} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                            <img src={user.profilePic} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                         ) : (
                             user?.username?.charAt(0) || "U"
                         )}

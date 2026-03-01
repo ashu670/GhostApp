@@ -50,15 +50,20 @@
     color: var(--text-secondary);
 }
 
-/* Upload Card Restyle */
 .upload-card-dash {
-    background-color: transparent;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: 16px;
+    background-color: var(--bg-surface-hover);
+    border: 1px solid transparent;
+    border-radius: 24px;
+    padding: 8px 12px 8px 16px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
+    transition: all var(--transition-fast);
+}
+
+.upload-card-dash:focus-within {
+    border-color: var(--border-color);
+    background-color: var(--bg-surface);
 }
 
 .upload-input-group {
@@ -75,6 +80,14 @@
     color: var(--text-primary);
     font-size: 15px;
     outline: none;
+    resize: none;
+    min-height: 24px;
+    max-height: 120px;
+    padding: 4px 0;
+    line-height: 1.4;
+    font-family: inherit;
+    /* Hide scrollbar if not needed */
+    overflow-y: auto;
 }
 
 .upload-input-dash::placeholder {
@@ -86,6 +99,7 @@
     align-items: center;
     gap: 12px;
     margin-left: auto;
+    flex-shrink: 0;
 }
 
 .file-input-wrapper {
@@ -123,13 +137,12 @@
 .upload-submit-dash {
     background: linear-gradient(90deg, var(--accent), var(--accent-hover));
     color: #ffffff;
-    border-radius: var(--radius-md);
-    padding: 10px 24px;
+    border-radius: 20px;
+    padding: 8px 20px;
     font-weight: 600;
     font-size: 14px;
     transition: all var(--transition-fast);
     border: none;
-    box-shadow: 0 2px 8px var(--accent-glow);
     cursor: pointer;
 }
 

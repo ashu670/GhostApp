@@ -98,7 +98,7 @@ export default function RightSidebar({ isOpen }) {
                 <button className="header-icon-btn"><Icons.Settings /></button>
                 <div className="user-profile-avatar" style={{ width: 36, height: 36, cursor: 'pointer', marginLeft: 8 }}>
                     {user?.profilePic ? (
-                        <img src={`${import.meta.env.VITE_API_URL}/uploads/${user.profilePic}`} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                        <img src={user.profilePic} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                     ) : (
                         user?.username?.charAt(0) || "U"
                     )}
@@ -115,7 +115,7 @@ export default function RightSidebar({ isOpen }) {
                                     <div key={n._id} className={`notification-item ${!n.isRead ? 'unread' : ''}`} onClick={() => handleNotificationClick(n)}>
                                         <div className="notification-avatar">
                                             {n.sender?.profilePic ? (
-                                                <img src={`${import.meta.env.VITE_API_URL}/uploads/${n.sender.profilePic}`} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                                                <img src={n.sender.profilePic} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                                             ) : (
                                                 n.sender?.username?.charAt(0) || "U"
                                             )}
@@ -149,7 +149,7 @@ export default function RightSidebar({ isOpen }) {
                                 <div className="suggestion-info">
                                     <div className="suggestion-avatar">
                                         {u.profilePic ? (
-                                            <img src={`${import.meta.env.VITE_API_URL}/uploads/${u.profilePic}`} alt={u.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                                            <img src={u.profilePic} alt={u.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                                         ) : (
                                             u.username.charAt(0)
                                         )}

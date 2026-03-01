@@ -47,7 +47,7 @@ export default function ProfilePhotoUploader() {
 
     const getProfileImageUrl = () => {
         if (user?.profilePic) {
-            return `${import.meta.env.VITE_API_URL}/uploads/${user.profilePic}`;
+            return user.profilePic;
         }
         return null;
     };

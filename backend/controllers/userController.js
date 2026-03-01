@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const uploadToCloudinary = require("../utils/uploadToCloudinary");
 
 // @route   PUT /api/users/profile/photo
 // @desc    Update user profile photo
@@ -10,9 +11,14 @@ exports.updateProfilePhoto = async (req, res) => {
             return res.status(400).json({ message: "No image file provided." });
         }
 
+        const result = await uploadToCloudinary(
+            req.file.buffer,
+            "ghostapp_profiles"
+        );
+
         const updatedUser = await User.findByIdAndUpdate(
             req.user._id,
-            { profilePic: req.file.filename },
+            { profilePic: result.secure_url },
             { new: true }
         ).select("-password");
 

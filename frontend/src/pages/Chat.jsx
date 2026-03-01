@@ -237,7 +237,7 @@ export default function Chat() {
             >
               <div className="user-avatar">
                 {u.profilePic ? (
-                  <img src={`${import.meta.env.VITE_API_URL}/uploads/${u.profilePic}`} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                  <img src={u.profilePic} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                 ) : (
                   u.username.charAt(0)
                 )}
@@ -266,7 +266,7 @@ export default function Chat() {
               <div className="chat-header-center">
                 <div className="user-avatar" style={{ width: '36px', height: '36px' }}>
                   {selectedUser.profilePic ? (
-                    <img src={`${import.meta.env.VITE_API_URL}/uploads/${selectedUser.profilePic}`} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                    <img src={selectedUser.profilePic} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                   ) : (
                     selectedUser.username.charAt(0)
                   )}

@@ -6,7 +6,7 @@ import "./Feed.css";
 
 // Icons (UI only)
 const ImageFileIcon = () => (
-  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: 22, height: 22 }}>
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
   </svg>
 );
@@ -38,6 +38,14 @@ export default function Feed() {
   const [page, setPage] = useState(1);
   const [activeComments, setActiveComments] = useState(null);
   const [commentText, setCommentText] = useState("");
+  const [currentUser, setCurrentUser] = useState(user);
+
+  useEffect(() => {
+    // Fetch latest profile to ensure profilePic reflects recent Cloudinary uploads
+    api.get("/users/profile")
+      .then(res => setCurrentUser(res.data))
+      .catch(err => console.error("Failed to fetch fresh profile", err));
+  }, []);
 
   const fetchPosts = async () => {
     try {
@@ -66,6 +74,8 @@ export default function Feed() {
 
       setFile(null);
       setCaption("");
+      const textarea = document.querySelector('.upload-input-dash');
+      if (textarea) textarea.style.height = 'auto';
       fetchPosts();
     } catch (err) {
       console.error(err);
@@ -140,10 +150,10 @@ export default function Feed() {
         {/* Upload Section */}
         <div className="upload-card-dash">
           <div className="post-avatar" style={{ width: '36px', height: '36px', fontSize: '14px' }}>
-            {user?.profilePic ? (
-              <img src={`${import.meta.env.VITE_API_URL}/uploads/${user.profilePic}`} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+            {currentUser?.profilePic ? (
+              <img src={currentUser.profilePic} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
             ) : (
-              user?.username?.charAt(0) || "U"
+              currentUser?.username?.charAt(0) || user?.username?.charAt(0) || "U"
             )}
           </div>
 
@@ -152,16 +162,19 @@ export default function Feed() {
               className="upload-input-dash"
               placeholder="What's on your mind?"
               value={caption}
-              onChange={(e) => setCaption(e.target.value)}
+              onChange={(e) => {
+                setCaption(e.target.value);
+                e.target.style.height = 'auto';
+                e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+              }}
               rows={1}
             />
           </div>
 
           <div className="upload-actions-dash">
             <div className="file-input-wrapper">
-              <button className="file-input-btn-dash">
+              <button className="file-input-btn-dash" title="Upload Media">
                 <ImageFileIcon />
-                Media
               </button>
               <input type="file" onChange={(e) => setFile(e.target.files[0])} accept="image/*,video/*" />
             </div>
@@ -184,7 +197,7 @@ export default function Feed() {
               <div className="post-user-info">
                 <div className="post-avatar">
                   {post.user.profilePic ? (
-                    <img src={`${import.meta.env.VITE_API_URL}/uploads/${post.user.profilePic}`} alt={post.user.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                    <img src={post.user.profilePic} alt={post.user.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                   ) : (
                     post.user.username.charAt(0)
                   )}
@@ -216,13 +229,13 @@ export default function Feed() {
                   {post.media.match(/\.(mp4|webm|ogg)$/) ? (
                     <video
                       className="post-media"
-                      src={`${import.meta.env.VITE_API_URL}/uploads/${post.media}`}
+                      src={post.media}
                       controls
                     />
                   ) : (
                     <img
                       className="post-media"
-                      src={`${import.meta.env.VITE_API_URL}/uploads/${post.media}`}
+                      src={post.media}
                       alt="Post media"
                     />
                   )}
@@ -250,7 +263,7 @@ export default function Feed() {
                       <div className="comment-item" key={i}>
                         <div className="comment-avatar">
                           {c.user?.profilePic ? (
-                            <img src={`${import.meta.env.VITE_API_URL}/uploads/${c.user.profilePic}`} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                            <img src={c.user.profilePic} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                           ) : (
                             c.user?.username?.charAt(0) || "U"
                           )}

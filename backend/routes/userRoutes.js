@@ -7,14 +7,7 @@ const userController = require("../controllers/userController");
 const router = express.Router();
 
 // Storage config for Profile Photos
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-profile-" + file.originalname);
-  },
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
