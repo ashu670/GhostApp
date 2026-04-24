@@ -2,6 +2,22 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const uploadToCloudinary = require("../utils/uploadToCloudinary");
 
+// @route   GET /api/users/profile
+// @desc    Get user profile data
+// @access  Private
+exports.getProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select("-password");
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
+        res.json(user);
+    } catch (err) {
+        console.error("getProfile Error:", err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
 // @route   PUT /api/users/profile/photo
 // @desc    Update user profile photo
 // @access  Private

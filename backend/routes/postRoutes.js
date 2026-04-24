@@ -3,6 +3,8 @@ const multer = require("multer");
 const auth = require("../middleware/authMiddleware");
 const Post = require("../models/Post");
 const uploadToCloudinary = require("../utils/uploadToCloudinary");
+const { actionLimiter } = require("../middleware/rateLimiter");
+const { redisClient } = require("../config/redis");
 
 const router = express.Router();
 
@@ -25,7 +27,7 @@ const upload = multer({
 });
 
 // CREATE POST (allow text-only by checking if file exists)
-router.post("/", auth, upload.single("media"), async (req, res) => {
+router.post("/", auth, actionLimiter, upload.single("media"), async (req, res) => {
   try {
     const { caption } = req.body;
 
@@ -50,6 +52,18 @@ router.post("/", auth, upload.single("media"), async (req, res) => {
 
     const post = await Post.create(postData);
 
+    // Cache Invalidation
+    if (redisClient.isReady) {
+      try {
+        const keys = await redisClient.keys("posts:*");
+        if (keys.length > 0) {
+          await redisClient.del(keys);
+        }
+      } catch (redisErr) {
+        console.error("Redis Flush Error:", redisErr);
+      }
+    }
+
     res.json(post);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -59,7 +73,7 @@ router.post("/", auth, upload.single("media"), async (req, res) => {
 const Notification = require("../models/Notification");
 
 // LIKE A POST
-router.post("/:id/like", auth, async (req, res) => {
+router.post("/:id/like", auth, actionLimiter, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ message: "Post not found" });
@@ -95,7 +109,7 @@ router.post("/:id/like", auth, async (req, res) => {
 });
 
 // COMMENT ON A POST
-router.post("/:id/comment", auth, async (req, res) => {
+router.post("/:id/comment", auth, actionLimiter, async (req, res) => {
   try {
     const { text } = req.body;
     if (!text?.trim()) return res.status(400).json({ message: "Comment config empty" });
@@ -134,7 +148,7 @@ router.post("/:id/comment", auth, async (req, res) => {
 });
 
 // SHARE A POST
-router.post("/:id/share", auth, async (req, res) => {
+router.post("/:id/share", auth, actionLimiter, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ message: "Post not found" });
@@ -184,6 +198,18 @@ router.get("/", auth, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const cacheKey = `posts:${page}:${limit}`;
+
+    if (redisClient.isReady) {
+      try {
+        const cachedData = await redisClient.get(cacheKey);
+        if (cachedData) {
+          return res.json(JSON.parse(cachedData));
+        }
+      } catch (redisErr) {
+        console.error("Redis Get Error:", redisErr);
+      }
+    }
 
     const posts = await Post.find()
       .populate("user", "username profilePic")
@@ -191,6 +217,14 @@ router.get("/", auth, async (req, res) => {
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
+
+    if (redisClient.isReady) {
+      try {
+        await redisClient.setEx(cacheKey, 60, JSON.stringify(posts));
+      } catch (redisErr) {
+        console.error("Redis Set Error:", redisErr);
+      }
+    }
 
     res.json(posts);
   } catch (err) {

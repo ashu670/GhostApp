@@ -44,7 +44,11 @@ export default function Feed() {
     // Fetch latest profile to ensure profilePic reflects recent Cloudinary uploads
     api.get("/users/profile")
       .then(res => setCurrentUser(res.data))
-      .catch(err => console.error("Failed to fetch fresh profile", err));
+      .catch(err => {
+        if (err.response?.status !== 404) {
+          console.debug("Profile fetch warning:", err.message);
+        }
+      });
   }, []);
 
   const fetchPosts = async () => {

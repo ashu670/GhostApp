@@ -6,6 +6,7 @@ import Chat from "./pages/Chat";
 import Feed from "./pages/Feed";
 import Profile from "./pages/Profile";
 import Layout from "./components/Layout";
+import { Toaster } from "react-hot-toast";
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
@@ -19,6 +20,7 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
+      <Toaster position="top-right" />
       <BrowserRouter>
         <Routes>
           {/* Public Route */}
