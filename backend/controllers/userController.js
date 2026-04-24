@@ -160,10 +160,20 @@ exports.getUserProfile = async (req, res) => {
             } catch (rErr) {}
         }
 
-        const user = await User.findById(userId).select("-password -email");
+        const mongoose = require("mongoose");
+        let user = null;
+
+        if (mongoose.Types.ObjectId.isValid(userId)) {
+            user = await User.findById(userId).select("-password -email");
+        }
+
+        if (!user) {
+            user = await User.findOne({ username: userId }).select("-password -email");
+        }
+
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        const posts = await Post.find({ user: userId }).sort({ createdAt: -1 });
+        const posts = await Post.find({ user: user._id }).sort({ createdAt: -1 });
 
         const responsePayload = { user, posts };
 
