@@ -4,7 +4,9 @@ import { useContext } from "react";
 import Login from "./pages/Login";
 import Chat from "./pages/Chat";
 import Feed from "./pages/Feed";
-import Profile from "./pages/Profile";
+import UserProfile from "./pages/UserProfile";
+import Settings from "./pages/Settings";
+import SearchComponent from "./components/search/SearchComponent";
 import Layout from "./components/Layout";
 import { Toaster } from "react-hot-toast";
 
@@ -31,8 +33,9 @@ function App() {
             <Route index element={<Navigate to="/feed" replace />} />
             <Route path="feed" element={<Feed />} />
             <Route path="chat" element={<Chat />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="search" element={<div style={{ padding: '20px' }}>Search placeholder</div>} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="profile/:id" element={<UserProfile />} />
+            <Route path="search" element={<div style={{ padding: '20px' }}><SearchComponent /></div>} />
           </Route>
 
         </Routes>

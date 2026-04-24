@@ -2,6 +2,7 @@ import { useEffect, useState, useContext } from "react";
 import api from "../api/axios";
 import { AuthContext } from "../context/AuthContext";
 import formatTime from "../utils/formatTime";
+import getImageUrl from "../utils/getImageUrl";
 import "./Feed.css";
 
 // Icons (UI only)
@@ -87,13 +88,7 @@ export default function Feed() {
   };
 
   const deletePost = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this post?")) return;
-    try {
-      await api.delete(`/posts/${id}`);
-      fetchPosts();
-    } catch (err) {
-      console.error(err);
-    }
+    // Deprecated from Feed UI, strictly limited to Profile navigation boundaries.
   };
 
   const likePost = async (id) => {
@@ -212,17 +207,11 @@ export default function Feed() {
                 </div>
               </div>
 
-              {post.user._id === (user?.id || user?._id) ? (
-                <button className="post-options-btn" title="Delete Post" onClick={() => deletePost(post._id)}>
-                  ✕
-                </button>
-              ) : (
-                <button className="post-options-btn">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-                  </svg>
-                </button>
-              )}
+              <button className="post-options-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                </svg>
+              </button>
             </div>
 
             <div className="post-content-area">
@@ -233,13 +222,13 @@ export default function Feed() {
                   {post.media.match(/\.(mp4|webm|ogg)$/) ? (
                     <video
                       className="post-media"
-                      src={post.media}
+                      src={getImageUrl(post.media)}
                       controls
                     />
                   ) : (
                     <img
                       className="post-media"
-                      src={post.media}
+                      src={getImageUrl(post.media)}
                       alt="Post media"
                     />
                   )}

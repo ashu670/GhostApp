@@ -1,6 +1,8 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const uploadToCloudinary = require("../utils/uploadToCloudinary");
+const { redisClient } = require("../config/redis");
+const Post = require("../models/Post");
 
 // @route   GET /api/users/profile
 // @desc    Get user profile data
@@ -118,5 +120,78 @@ exports.updatePassword = async (req, res) => {
     } catch (err) {
         console.error("updatePassword Error:", err);
         res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// @route   GET /api/users/:id
+exports.getUserProfile = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const cacheKey = `userProfile:${userId}`;
+
+        if (redisClient.isReady) {
+            try {
+                const cached = await redisClient.get(cacheKey);
+                if (cached) return res.json(JSON.parse(cached));
+            } catch (rErr) {}
+        }
+
+        const user = await User.findById(userId).select("-password -email");
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        const posts = await Post.find({ user: userId }).sort({ createdAt: -1 });
+
+        const responsePayload = { user, posts };
+
+        if (redisClient.isReady) {
+            try {
+                await redisClient.setEx(cacheKey, 60, JSON.stringify(responsePayload));
+            } catch (rErr) {}
+        }
+
+        res.json(responsePayload);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// @route   POST /api/users/:id/follow
+exports.toggleFollow = async (req, res) => {
+    try {
+        const targetUserId = req.params.id;
+        const currentUserId = req.user._id;
+
+        if (targetUserId === currentUserId.toString()) {
+            return res.status(400).json({ message: "You cannot follow yourself" });
+        }
+
+        const targetUser = await User.findById(targetUserId);
+        const currentUser = await User.findById(currentUserId);
+
+        if (!targetUser || !currentUser) return res.status(404).json({ message: "User not found" });
+
+        const isFollowing = currentUser.following.includes(targetUserId);
+
+        if (isFollowing) {
+            currentUser.following.pull(targetUserId);
+            targetUser.followers.pull(currentUserId);
+        } else {
+            currentUser.following.push(targetUserId);
+            targetUser.followers.push(currentUserId);
+        }
+
+        await currentUser.save();
+        await targetUser.save();
+
+        if (redisClient.isReady) {
+            await redisClient.del(`suggestions:${currentUserId}`);
+            await redisClient.del(`suggestions:${targetUserId}`);
+            await redisClient.del(`userProfile:${targetUserId}`);
+            await redisClient.del(`userProfile:${currentUserId}`);
+        }
+
+        res.json({ following: !isFollowing });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 };

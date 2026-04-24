@@ -1,0 +1,287 @@
+.profile-page-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+}
+
+.profile-cover {
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #333;
+    margin-bottom: 2rem;
+}
+
+.profile-avatar-large {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #333;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    font-weight: bold;
+    color: #fff;
+    border: 3px solid #444;
+}
+
+.profile-avatar-large img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-info-block {
+    flex-grow: 1;
+}
+
+.profile-header-row {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.profile-username {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+.profile-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-profile-action {
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-profile-action:hover {
+    background: #333;
+}
+
+.btn-profile-primary {
+    background: #007bff;
+    color: #fff;
+    border: none;
+}
+
+.btn-profile-primary:hover {
+    background: #0056b3;
+}
+
+.profile-stats {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1rem;
+}
+
+.profile-stat-item {
+    font-size: 1rem;
+}
+
+.profile-stat-item strong {
+    font-weight: 600;
+}
+
+.profile-bio {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: #ddd;
+    max-width: 400px;
+}
+
+/* Feed Specific Styles */
+.profile-feed-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.profile-post-card {
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Text Only Specifics */
+.profile-post-card.text-only {
+    padding: 2rem 1.5rem;
+}
+
+/* Media Specifics */
+.profile-post-media img, .profile-post-media video {
+    width: 100%;
+    max-height: 500px;
+    object-fit: cover;
+    display: block;
+}
+
+.profile-post-caption {
+    padding: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #eee;
+}
+
+.text-only .profile-post-caption {
+    padding: 0;
+    font-size: 1.2rem; /* Larger for text-only */
+    color: #fff;
+    text-align: center;
+}
+
+/* Actions Ribbon */
+.profile-post-actions {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1rem;
+    border-top: 1px solid #222;
+}
+
+.text-only .profile-post-actions {
+    margin-top: 1.5rem;
+    padding-bottom: 0;
+    justify-content: center;
+}
+
+.profile-action-btn {
+    background: transparent;
+    border: none;
+    color: #aaa;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.profile-action-btn:hover {
+    color: #fff;
+}
+
+.profile-action-btn.liked {
+    color: #ff3b3b;
+}
+
+/* Comments Section */
+.profile-comments-section {
+    padding: 1rem;
+    border-top: 1px solid #222;
+    background: #0a0a0a;
+}
+
+.profile-comment-item {
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.profile-comment-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    color: #fff;
+    overflow: hidden;
+}
+
+.profile-comment-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-comment-body {
+    flex-grow: 1;
+    background: #1a1a1a;
+    padding: 0.8rem;
+    border-radius: 8px;
+}
+
+.profile-comment-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.3rem;
+}
+
+.profile-comment-username {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #fff;
+}
+
+.profile-comment-text {
+    font-size: 0.9rem;
+    color: #ddd;
+    line-height: 1.4;
+}
+
+.profile-comment-delete {
+    background: transparent;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 0 0.5rem;
+}
+
+.profile-comment-delete:hover {
+    color: #ff3b3b;
+}
+
+.profile-comment-input-area {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.profile-comment-input {
+    flex-grow: 1;
+    background: #111;
+    border: 1px solid #333;
+    padding: 0.6rem 1rem;
+    border-radius: 20px;
+    color: #fff;
+    outline: none;
+}
+
+.profile-comment-submit {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    padding: 0 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.profile-comment-submit:disabled {
+    background: #333;
+    color: #666;
+    cursor: not-allowed;
+}

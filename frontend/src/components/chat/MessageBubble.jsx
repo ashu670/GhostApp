@@ -17,14 +17,31 @@ export default function MessageBubble({ message, isOwn, onEdit, onDelete }) {
     const [editText, setEditText] = useState(message.text || "");
     const [showActions, setShowActions] = useState(false);
 
+    React.useEffect(() => {
+        setEditText(message.text || "");
+    }, [message.text]);
+
     const canEdit = isOwn && !message.deleted && (!message.media || message.text);
     const canDelete = isOwn && !message.deleted;
 
     const handleSaveEdit = () => {
-        if (editText.trim() !== message.text) {
+        if (editText.trim() !== (message.text || "")) {
             onEdit(message._id, editText);
         }
         setIsEditing(false);
+    };
+
+    const handleCopy = () => {
+        const payload = message.text || (message.media?.url || message.media);
+        if (payload) {
+            navigator.clipboard.writeText(payload);
+        }
+    };
+
+    const handleDelete = () => {
+        if (window.confirm("Are you sure you want to delete this message?")) {
+            onDelete(message._id);
+        }
     };
 
     const handleCancelEdit = () => {
@@ -86,11 +103,12 @@ export default function MessageBubble({ message, isOwn, onEdit, onDelete }) {
             onMouseLeave={() => setShowActions(false)}
         >
             {/* Action Menu Trigger (Only Desktop Hover for now) */}
-            {isOwn && showActions && (canEdit || canDelete) && !isEditing && (
+            {isOwn && showActions && !isEditing && !message.deleted && (
                 <div className="message-actions-container">
                     <MessageActions
+                        onCopy={handleCopy}
                         onEdit={() => setIsEditing(true)}
-                        onDelete={() => onDelete(message._id)}
+                        onDelete={handleDelete}
                         canEdit={canEdit}
                         canDelete={canDelete}
                     />

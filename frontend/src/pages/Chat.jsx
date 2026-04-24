@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext, useRef } from "react";
 import { io } from "socket.io-client";
 import { AuthContext } from "../context/AuthContext";
+import { useLocation } from "react-router-dom";
 import api from "../api/axios";
 import ChatInput from "../components/chat/ChatInput";
 import MessageBubble from "../components/chat/MessageBubble";
@@ -10,19 +11,20 @@ import socketInstance from "../socket";
 
 export default function Chat() {
   const { user } = useContext(AuthContext);
+  const location = useLocation();
 
   const [socket, setSocket] = useState(null);
-  const [users, setUsers] = useState([]);
+  const [conversations, setConversations] = useState([]);
+  const [selectedConversation, setSelectedConversation] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [conversationId, setConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
 
   const messagesEndRef = useRef(null);
-  const conversationIdRef = useRef(conversationId);
+  const conversationIdRef = useRef(null);
 
   useEffect(() => {
-    conversationIdRef.current = conversationId;
-  }, [conversationId]);
+    conversationIdRef.current = selectedConversation?._id;
+  }, [selectedConversation]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -39,59 +41,47 @@ export default function Chat() {
       socketInstance.auth = { token };
       socketInstance.connect();
     }
-
     setSocket(socketInstance);
 
     socketInstance.on("receiveMessage", (msg) => {
-      if (conversationIdRef.current && (msg.conversationId === conversationIdRef.current || (msg.conversationId && msg.conversationId._id === conversationIdRef.current))) {
+      if (conversationIdRef.current === msg.conversationId) {
         setMessages((prev) => [...prev, msg]);
       }
 
-      // Bump sender to top if we receive a message from them
-      setUsers(prevUsers => {
-        let senderId = null;
-        let senderObj = null;
-
-        if (msg.sender && typeof msg.sender === 'object') {
-          senderId = msg.sender._id || msg.sender.id;
-          senderObj = msg.sender;
+      setConversations((prev) => {
+        const index = prev.findIndex(c => String(c._id) === String(msg.conversationId));
+        if (index > -1) {
+          const newConvos = [...prev];
+          const bumped = newConvos.splice(index, 1)[0];
+          bumped.lastMessage = msg;
+          newConvos.unshift(bumped);
+          return newConvos;
         } else {
-          senderId = msg.sender;
+          api.get("/conversations").then(res => setConversations(res.data));
+          return prev;
         }
-
-        if (!senderId) return prevUsers; // safety check
-
-        // Find if user already exists in current list
-        const userIndex = prevUsers.findIndex(u => String(u._id) === String(senderId));
-
-        if (userIndex > -1) {
-          // User exists, move them to top
-          const newUsers = [...prevUsers];
-          const bumpedUser = newUsers.splice(userIndex, 1)[0];
-
-          // If the socket payload gave us a fresh populated object, merge any updates (like new profilePic)
-          const updatedUser = senderObj ? { ...bumpedUser, ...senderObj } : bumpedUser;
-
-          newUsers.unshift(updatedUser);
-          return newUsers;
-        } else if (senderObj) {
-          // Doesn't exist in list yet, add to top.
-          return [senderObj, ...prevUsers];
-        }
-
-        return prevUsers;
       });
     });
 
-    socketInstance.on("messageEdited", (updatedMsg) => {
-      if (!conversationIdRef.current || updatedMsg.conversationId === conversationIdRef.current || (updatedMsg.conversationId && updatedMsg.conversationId._id === conversationIdRef.current)) {
-        setMessages((prev) => prev.map(m => m._id === updatedMsg._id ? updatedMsg : m));
+    socketInstance.on("messageUpdated", (updatedMsg) => {
+      if (String(conversationIdRef.current) === String(updatedMsg.conversationId || updatedMsg.conversationId?._id)) {
+        setMessages((prev) => prev.map((m) => {
+            if (String(m._id) === String(updatedMsg._id)) {
+                return { ...m, ...updatedMsg, text: updatedMsg.content || updatedMsg.text };
+            }
+            return m;
+        }));
       }
     });
 
     socketInstance.on("messageDeleted", (updatedMsg) => {
-      if (!conversationIdRef.current || updatedMsg.conversationId === conversationIdRef.current || (updatedMsg.conversationId && updatedMsg.conversationId._id === conversationIdRef.current)) {
-        setMessages((prev) => prev.map(m => m._id === updatedMsg._id ? updatedMsg : m));
+      if (String(conversationIdRef.current) === String(updatedMsg.conversationId || updatedMsg.conversationId?._id)) {
+        setMessages((prev) => prev.map((m) => {
+            if (String(m._id) === String(updatedMsg._id)) {
+                return { ...m, ...updatedMsg, text: updatedMsg.content || updatedMsg.text };
+            }
+            return m;
+        }));
       }
     });
 
@@ -102,84 +92,47 @@ export default function Chat() {
     };
   }, []);
 
-  // Fetch users and map to recent conversations if any
+  // Fetch conversations locally restricted to active networks natively
   useEffect(() => {
-    const fetchUsersAndConversations = async () => {
+    const fetchConversations = async () => {
       try {
-        // Fetch all users or friends
-        const resUsers = await api.get("/users/search?q=");
-        const allUsers = resUsers.data.filter(u => u._id !== (user?.id || user?._id));
+        const res = await api.get("/conversations");
+        setConversations(res.data);
 
-        // Fetch recent conversations for sorting
-        const resConvos = await api.get("/messages/conversations/recent");
-        const recentConvos = resConvos.data; // Expected: [{ recipientId, lastMessageAt }, ...]
-
-        // Create a map for quick lookup of last message time
-        const lastActiveMap = {};
-        recentConvos.forEach(c => {
-          lastActiveMap[c.recipientId] = new Date(c.lastMessageAt).getTime();
-        });
-
-        // Sort users: those with conversations first (sorted by recent), then others alphabetically
-        const sortedUsers = [...allUsers].sort((a, b) => {
-          const timeA = lastActiveMap[a._id] || 0;
-          const timeB = lastActiveMap[b._id] || 0;
-
-          if (timeA !== timeB) {
-            return timeB - timeA; // Descending time
-          }
-          // Fallback to alphabetical if both have no conversation or same time (unlikely)
-          return a.username.localeCompare(b.username);
-        });
-
-        setUsers(sortedUsers);
+        // Natively hook navigation arguments resolving into the DOM automatically if prompted
+        if (location.state?.conversation) {
+            selectConversation(location.state.conversation);
+            window.history.replaceState({}, document.title);
+        }
       } catch (err) {
         console.error(err);
       }
     };
     if (user) {
-      fetchUsersAndConversations();
+      fetchConversations();
     }
-  }, [user]);
+  }, [user, location.state]);
 
-  // Select user and get conversation
-  const selectUser = async (u) => {
-    setSelectedUser(u);
+  const selectConversation = async (conv) => {
+    setSelectedConversation(conv);
+    const targetParticipant = conv.participants.find(p => p._id !== (user?._id || user?.id));
+    setSelectedUser(targetParticipant);
+
     try {
-      const res = await api.post("/messages/conversation", {
-        receiverId: u._id,
-      });
-      setConversationId(res.data._id);
-
-      const msgs = await api.get(`/messages/${res.data._id}`);
+      const msgs = await api.get(`/messages/${conv._id}`);
       setMessages(msgs.data);
     } catch (err) {
       console.error(err);
     }
   };
 
-  // When sending a message, manually bump the user to the top
-  const bumpUserToTop = (userId) => {
-    setUsers(prevUsers => {
-      const userIndex = prevUsers.findIndex(u => u._id === userId);
-      if (userIndex > 0) {
-        const newUsers = [...prevUsers];
-        const [bumpedUser] = newUsers.splice(userIndex, 1);
-        newUsers.unshift(bumpedUser);
-        return newUsers;
-      }
-      return prevUsers;
-    });
-  };
-
-  // Handle Send from ChatInput
   const handleSendMessage = async ({ text, file, mediaType, mediaUrl }) => {
-    if ((!text?.trim() && !file && !mediaUrl) || !conversationId) return;
+    if ((!text?.trim() && !file && !mediaUrl) || !selectedConversation) return;
 
     const formData = new FormData();
-    formData.append("conversationId", conversationId);
+    formData.append("conversationId", selectedConversation._id);
     formData.append("receiverId", selectedUser._id);
-    if (text?.trim()) formData.append("text", text);
+    if (text?.trim()) formData.append("content", text); 
     if (file) formData.append("media", file);
     if (mediaType && mediaUrl) {
       formData.append("mediaType", mediaType);
@@ -191,68 +144,124 @@ export default function Chat() {
         headers: { "Content-Type": "multipart/form-data" }
       });
       setMessages((prev) => [...prev, res.data]);
-      bumpUserToTop(selectedUser._id);
+      
+      // Bump map logic natively
+      setConversations((prev) => {
+        const index = prev.findIndex(c => String(c._id) === String(selectedConversation._id));
+        if (index > -1) {
+          const newConvos = [...prev];
+          const bumped = newConvos.splice(index, 1)[0];
+          bumped.lastMessage = res.data;
+          newConvos.unshift(bumped);
+          return newConvos;
+        }
+        return prev;
+      });
+
     } catch (err) {
       console.error(err);
     }
   };
 
-  // Handle Edit from MessageBubble
   const handleEditMessage = async (msgId, newText) => {
+    // Optimistic UI Update natively parsing DOM before backend
+    setMessages((prev) => prev.map((m) => {
+        if (String(m._id) === String(msgId)) {
+            return { ...m, content: newText, text: newText, edited: true };
+        }
+        return m;
+    }));
+
     try {
       const res = await api.put(`/messages/${msgId}`, { text: newText });
-      setMessages((prev) => prev.map(m => m._id === msgId ? res.data : m));
+      const updatedMsg = res.data;
+      
+      setMessages((prev) => prev.map((m) => {
+          if (String(m._id) === String(msgId)) {
+              return { ...m, ...updatedMsg, text: updatedMsg.content || updatedMsg.text };
+          }
+          return m;
+      }));
     } catch (err) {
-      console.error(err);
+      console.error("DOM Sync Failed: ", err);
     }
   };
 
-  // Handle Delete from MessageBubble
   const handleDeleteMessage = async (msgId) => {
+    // Optimistic UI Update rendering Native Deleted Bubble
+    setMessages((prev) => prev.map((m) => {
+        if (String(m._id) === String(msgId)) {
+            return { ...m, deleted: true, content: "", text: "" };
+        }
+        return m;
+    }));
+
     try {
       const res = await api.delete(`/messages/${msgId}`);
-      setMessages((prev) => prev.map(m => m._id === msgId ? res.data : m));
+      const updatedMsg = res.data;
+
+      setMessages((prev) => prev.map((m) => {
+          if (String(m._id) === String(msgId)) {
+              return { ...m, ...updatedMsg, text: updatedMsg.content || updatedMsg.text };
+          }
+          return m;
+      }));
     } catch (err) {
-      console.error(err);
+      console.error("DOM Sync Failed: ", err);
     }
   };
 
   const handleBackToUsers = () => {
+    setSelectedConversation(null);
     setSelectedUser(null);
   };
 
   return (
     <div className="chat-layout">
-      {/* Users List Sidebar */}
-      <div className={`chat-sidebar ${selectedUser ? 'mobile-hidden' : ''}`}>
+      {/* Inbox List Sidebar */}
+      <div className={`chat-sidebar ${selectedConversation ? 'mobile-hidden' : ''}`}>
         <div className="sidebar-header">
           <span className="sidebar-title">Messages</span>
         </div>
         <div className="user-list">
-          {users.map((u) => (
-            <div
-              key={u._id}
-              onClick={() => selectUser(u)}
-              className={`user-item ${selectedUser?._id === u._id ? 'active' : ''}`}
-            >
-              <div className="user-avatar">
-                {u.profilePic ? (
-                  <img src={u.profilePic} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-                ) : (
-                  u.username.charAt(0)
-                )}
-              </div>
-              <div className="user-info">
-                <span className="user-name">{u.username}</span>
-              </div>
+          {conversations.length === 0 ? (
+            <div style={{ color: '#888', padding: '20px', textAlign: 'center', fontSize: '0.9rem' }}>
+                You have no active conversations. Visit a profile to start chatting!
             </div>
-          ))}
+          ) : conversations.map((c) => {
+            const target = c.participants.find(p => p._id !== (user?._id || user?.id));
+            if (!target) return null;
+
+            return (
+              <div
+                key={c._id}
+                onClick={() => selectConversation(c)}
+                className={`user-item ${selectedConversation?._id === c._id ? 'active' : ''}`}
+              >
+                <div className="user-avatar">
+                  {target.profilePic ? (
+                    <img src={target.profilePic} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    target.username.charAt(0)
+                  )}
+                </div>
+                <div className="user-info" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span className="user-name">{target.username}</span>
+                  {c.lastMessage && (
+                      <span style={{ fontSize: '0.8rem', color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>
+                          {c.lastMessage.content || "Sent an attachment"}
+                      </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
       {/* Chat Window */}
-      <div className={`chat-main ${!selectedUser ? 'mobile-hidden' : ''}`}>
-        {selectedUser ? (
+      <div className={`chat-main ${!selectedConversation ? 'mobile-hidden' : ''}`}>
+        {selectedConversation ? (
           <>
             <div className="chat-header">
               <div className="chat-header-left">
@@ -265,13 +274,13 @@ export default function Chat() {
 
               <div className="chat-header-center">
                 <div className="user-avatar" style={{ width: '36px', height: '36px' }}>
-                  {selectedUser.profilePic ? (
+                  {selectedUser?.profilePic ? (
                     <img src={selectedUser.profilePic} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                   ) : (
-                    selectedUser.username.charAt(0)
+                    selectedUser?.username?.charAt(0) || "U"
                   )}
                 </div>
-                <span className="chat-header-name">{selectedUser.username}</span>
+                <span className="chat-header-name">{selectedUser?.username}</span>
               </div>
 
               <div className="chat-header-right">
@@ -298,8 +307,8 @@ export default function Chat() {
                       </div>
                     )}
                     <MessageBubble
-                      message={m}
-                      isOwn={m.sender === (user?.id || user?._id) || m.sender?._id === (user?.id || user?._id)}
+                      message={{...m, text: m.content || m.text}} 
+                      isOwn={String(m.sender) === String(user?.id || user?._id) || String(m.sender?._id) === String(user?.id || user?._id)}
                       onEdit={handleEditMessage}
                       onDelete={handleDeleteMessage}
                     />
@@ -315,7 +324,7 @@ export default function Chat() {
           </>
         ) : (
           <div className="empty-chat">
-            Select a user from the sidebar to start chatting
+            Select a conversation heavily restricted on permissions.
           </div>
         )}
       </div>

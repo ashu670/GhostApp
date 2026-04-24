@@ -187,7 +187,66 @@ router.delete("/:id", auth, async (req, res) => {
 
     await post.deleteOne();
 
+    // Invalidate Redis caches
+    if (redisClient.isReady) {
+      try {
+        await redisClient.del(`userProfile:${req.user._id}`);
+        const keys = await redisClient.keys("posts:*");
+        if (keys.length > 0) {
+          await redisClient.del(keys);
+        }
+      } catch (redisErr) {
+        console.error("Redis Flush Error:", redisErr);
+      }
+    }
+
     res.json({ message: "Post deleted" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// DELETE A COMMENT
+router.delete("/:id/comments/:commentId", auth, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    const comment = post.comments.find(
+      (c) => c._id.toString() === req.params.commentId
+    );
+    if (!comment) return res.status(404).json({ message: "Comment not found" });
+
+    // Permissions: Commenter OR Post Owner can delete
+    if (
+      comment.user.toString() !== req.user._id.toString() &&
+      post.user.toString() !== req.user._id.toString()
+    ) {
+      return res.status(403).json({ message: "Not allowed to delete this comment" });
+    }
+
+    post.comments = post.comments.filter(
+      (c) => c._id.toString() !== req.params.commentId
+    );
+
+    await post.save();
+
+    // Invalidate Redis caches
+    if (redisClient.isReady) {
+      try {
+        await redisClient.del(`userProfile:${post.user.toString()}`);
+        const keys = await redisClient.keys("posts:*");
+        if (keys.length > 0) {
+          await redisClient.del(keys);
+        }
+      } catch (redisErr) {
+        console.error("Redis Flush Error:", redisErr);
+      }
+    }
+
+    // Return populated post string similarly to comment creation
+    const populatedPost = await Post.findById(post._id).populate("comments.user", "username profilePic");
+    res.json(populatedPost);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

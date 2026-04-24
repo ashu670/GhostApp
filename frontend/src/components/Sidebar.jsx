@@ -57,7 +57,7 @@ export default function Sidebar({ isOpen }) {
                 <NavLink to="/search" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
                     <Icons.Search /> Search
                 </NavLink>
-                <NavLink to="/profile" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                <NavLink to={`/profile/${user?._id}`} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
                     <Icons.Profile /> Profile
                 </NavLink>
             </nav>

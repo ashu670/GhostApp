@@ -8,20 +8,20 @@ const userSchema = new mongoose.Schema(
             unique: true,
             trim: true,
         },
-            email: {
+        email: {
             type: String,
             required: true,
             unique: true,
         },
-            password: {
+        password: {
             type: String,
             required: true,
         },
-            profilePic: {
+        profilePic: {
             type: String,
             default: "",
         },
-            bio: {
+        bio: {
             type: String,
             default: "",
         },

@@ -4,7 +4,7 @@ import UsernameEditor from "../components/profile/UsernameEditor";
 import PasswordChanger from "../components/profile/PasswordChanger";
 import "../components/profile/Profile.css";
 
-export default function Profile() {
+export default function Settings() {
     return (
         <div className="profile-page-layout">
             <div className="profile-header">

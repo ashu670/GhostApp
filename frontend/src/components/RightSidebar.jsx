@@ -95,8 +95,8 @@ export default function RightSidebar({ isOpen }) {
                     <Icons.Bell />
                     {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
                 </button>
-                <button className="header-icon-btn"><Icons.Settings /></button>
-                <div className="user-profile-avatar" style={{ width: 36, height: 36, cursor: 'pointer', marginLeft: 8 }}>
+                <button className="header-icon-btn" onClick={() => window.location.href = '/settings'}><Icons.Settings /></button>
+                <div onClick={() => window.location.href = `/profile/${user?._id}`} className="user-profile-avatar" style={{ width: 36, height: 36, cursor: 'pointer', marginLeft: 8 }}>
                     {user?.profilePic ? (
                         <img src={user.profilePic} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                     ) : (

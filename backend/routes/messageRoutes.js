@@ -26,79 +26,18 @@ const upload = multer({
   },
 });
 
-// GET RECENT CONVERSATIONS (For sorting User list)
-router.get("/conversations/recent", auth, async (req, res) => {
-  try {
-    const conversations = await Conversation.find({
-      members: { $in: [req.user._id] }
-    });
-
-    if (!conversations.length) {
-      return res.json([]);
-    }
-
-    // Since we need to sort by lastMessageAt which isn't directly on Conversation model in current shape,
-    // we fetch the latest message for each.
-    const recentConvos = [];
-
-    for (const conv of conversations) {
-      const latestMessage = await Message.findOne({ conversationId: conv._id })
-        .sort({ createdAt: -1 })
-        .limit(1);
-
-      const recipientId = conv.members.find(m => m.toString() !== req.user._id.toString());
-
-      recentConvos.push({
-        conversationId: conv._id,
-        recipientId,
-        lastMessageAt: latestMessage ? latestMessage.createdAt : conv.createdAt
-      });
-    }
-
-    // Sort descending by activity
-    recentConvos.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt));
-
-    res.json(recentConvos);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// CREATE OR GET CONVERSATION
-router.post("/conversation", auth, async (req, res) => {
-  try {
-    const { receiverId } = req.body;
-
-    let conversation = await Conversation.findOne({
-      members: { $all: [req.user._id, receiverId] },
-    });
-
-    if (!conversation) {
-      conversation = await Conversation.create({
-        members: [req.user._id, receiverId],
-      });
-    }
-
-    res.json(conversation);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
 // SEND MESSAGE (with optional media, gif, or sticker)
 router.post("/", auth, upload.single("media"), async (req, res) => {
   try {
-    const { conversationId, text, receiverId, mediaType, mediaUrl } = req.body;
+    const { conversationId, content, receiverId, mediaType, mediaUrl } = req.body;
     let finalMedia = null;
 
     if (mediaType && mediaUrl) {
-      // It's a Giphy GIF or a WebP Sticker sent as a URL string
       finalMedia = {
         type: mediaType,
         url: mediaUrl,
       };
     } else if (req.file) {
-      // It's a standard Multer file upload (image/video)
       const type = req.file.mimetype.startsWith("video/") ? "video" : "image";
       const result = await uploadToCloudinary(req.file.buffer, "ghostapp_chat");
       finalMedia = {
@@ -107,24 +46,29 @@ router.post("/", auth, upload.single("media"), async (req, res) => {
       };
     }
 
-    if (!text?.trim() && !finalMedia) {
+    if (!content?.trim() && !finalMedia) {
       return res.status(400).json({ message: "Message cannot be empty." });
     }
 
     const message = await Message.create({
       conversationId,
       sender: req.user._id,
-      text: text || "",
+      receiver: receiverId,
+      content: content || "",
       media: finalMedia,
     });
 
-    // Handle initial populated response if needed by frontend (optional, depending on existing rendering)
+    // Update Conversation Pointers
+    await Conversation.findByIdAndUpdate(conversationId, {
+      lastMessage: message._id,
+      updatedAt: new Date()
+    });
+
     const populatedMessage = await Message.findById(message._id).populate("sender", "username profilePic");
 
-    // Emit real-time
     req.app.get("io").to(receiverId).emit("receiveMessage", populatedMessage);
 
-    res.json(message);
+    res.json(populatedMessage);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -142,7 +86,7 @@ router.get("/:conversationId", auth, async (req, res) => {
       return res.status(404).json({ message: "Conversation not found" });
 
     // Ensure user is member
-    if (!conversation.members.includes(req.user._id))
+    if (!conversation.participants.includes(req.user._id))
       return res.status(403).json({ message: "Access denied" });
 
     const messages = await Message.find({
@@ -173,7 +117,7 @@ router.put("/:id", auth, async (req, res) => {
       return res.status(403).json({ message: "Cannot edit a deleted message" });
     }
 
-    message.text = text || "";
+    message.content = text || "";
     message.edited = true;
     message.editedAt = new Date();
 
@@ -212,7 +156,7 @@ router.delete("/:id", auth, async (req, res) => {
     message.deletedAt = new Date();
     message.deletedBy = req.user._id;
     message.systemEvent = "message_deleted";
-    message.text = "";
+    message.content = "";
     message.media = null;
 
     await message.save();
