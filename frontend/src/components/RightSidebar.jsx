@@ -84,6 +84,9 @@ export default function RightSidebar({ isOpen }) {
             }
         }
         setShowNotifications(false);
+        if (notif.type === 'follow') {
+            window.location.href = `/profile/${notif.sender._id}`;
+        }
     };
 
     return (
@@ -126,6 +129,7 @@ export default function RightSidebar({ isOpen }) {
                                             {n.type === 'like' && 'liked your post'}
                                             {n.type === 'comment' && 'commented on your post'}
                                             {n.type === 'share' && 'shared your post'}
+                                            {n.type === 'follow' && 'followed you'}
                                         </div>
                                     </div>
                                 ))}

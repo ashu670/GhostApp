@@ -172,12 +172,27 @@ exports.toggleFollow = async (req, res) => {
 
         const isFollowing = currentUser.following.includes(targetUserId);
 
+        let Notification = require("../models/Notification");
+
         if (isFollowing) {
             currentUser.following.pull(targetUserId);
             targetUser.followers.pull(currentUserId);
         } else {
             currentUser.following.push(targetUserId);
             targetUser.followers.push(currentUserId);
+
+            // Execute Native Realtime Notification System
+            const notif = await Notification.create({
+                sender: currentUserId,
+                recipient: targetUserId,
+                type: "follow"
+            });
+
+            const populatedNotif = await Notification.findById(notif._id).populate("sender", "username profilePic");
+            const io = req.app.get("io");
+            if (io) {
+                io.to(targetUserId.toString()).emit("newNotification", populatedNotif);
+            }
         }
 
         await currentUser.save();
