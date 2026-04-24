@@ -42,6 +42,7 @@ router.get("/search", auth, async (req, res) => {
 router.get("/profile", auth, userController.getProfile);
 router.put("/profile/photo", auth, upload.single("profilePic"), userController.updateProfilePhoto);
 router.put("/profile/username", auth, userController.updateUsername);
+router.put("/profile/bio", auth, userController.updateBio);
 router.put("/profile/password", auth, userController.updatePassword);
 
 // ACTIONS

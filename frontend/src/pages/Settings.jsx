@@ -1,6 +1,7 @@
 import React from "react";
 import ProfilePhotoUploader from "../components/profile/ProfilePhotoUploader";
 import UsernameEditor from "../components/profile/UsernameEditor";
+import BioEditor from "../components/profile/BioEditor";
 import PasswordChanger from "../components/profile/PasswordChanger";
 import "../components/profile/Profile.css";
 
@@ -21,6 +22,7 @@ export default function Settings() {
                 {/* Right Side: Editable Settings */}
                 <div className="profile-col-right">
                     <UsernameEditor />
+                    <BioEditor />
                     <PasswordChanger />
                 </div>
             </div>

@@ -85,6 +85,30 @@ exports.updateUsername = async (req, res) => {
     }
 };
 
+// @route   PUT /api/users/profile/bio
+// @desc    Update bio string
+// @access  Private
+exports.updateBio = async (req, res) => {
+    try {
+        const { bio } = req.body;
+
+        if (bio && bio.length > 150) {
+            return res.status(400).json({ message: "Bio cannot exceed 150 characters." });
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user._id,
+            { bio: bio ? bio.trim() : "" },
+            { new: true }
+        ).select("-password");
+
+        res.json(updatedUser);
+    } catch (err) {
+        console.error("updateBio Error:", err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
 // @route   PUT /api/users/profile/password
 // @desc    Change user password
 // @access  Private
