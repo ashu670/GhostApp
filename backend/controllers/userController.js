@@ -188,9 +188,45 @@ exports.toggleFollow = async (req, res) => {
             await redisClient.del(`suggestions:${targetUserId}`);
             await redisClient.del(`userProfile:${targetUserId}`);
             await redisClient.del(`userProfile:${currentUserId}`);
+
+            // Flush isolated feeds aggressively!
+            try {
+                const keys = await redisClient.keys(`feed:${currentUserId}:*`);
+                if (keys.length > 0) await redisClient.del(keys);
+            } catch (rErr) {
+                console.error("Flush err:", rErr);
+            }
         }
 
         res.json({ following: !isFollowing });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// @route   GET /api/users/:id/followers
+exports.getFollowers = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id)
+            .populate("followers", "_id username profilePic")
+            .select("followers");
+            
+        if (!user) return res.status(404).json({ message: "User not found" });
+        res.json(user.followers || []);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// @route   GET /api/users/:id/following
+exports.getFollowing = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id)
+            .populate("following", "_id username profilePic")
+            .select("following");
+            
+        if (!user) return res.status(404).json({ message: "User not found" });
+        res.json(user.following || []);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

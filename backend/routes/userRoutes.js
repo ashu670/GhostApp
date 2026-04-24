@@ -47,5 +47,7 @@ router.put("/profile/password", auth, userController.updatePassword);
 // ACTIONS
 router.get("/:id", auth, userController.getUserProfile);
 router.post("/:id/follow", auth, actionLimiter, userController.toggleFollow);
+router.get("/:id/followers", auth, userController.getFollowers);
+router.get("/:id/following", auth, userController.getFollowing);
 
 module.exports = router;

@@ -55,7 +55,7 @@ router.post("/", auth, actionLimiter, upload.single("media"), async (req, res) =
     // Cache Invalidation
     if (redisClient.isReady) {
       try {
-        const keys = await redisClient.keys("posts:*");
+        const keys = await redisClient.keys("feed:*");
         if (keys.length > 0) {
           await redisClient.del(keys);
         }
@@ -191,7 +191,7 @@ router.delete("/:id", auth, async (req, res) => {
     if (redisClient.isReady) {
       try {
         await redisClient.del(`userProfile:${req.user._id}`);
-        const keys = await redisClient.keys("posts:*");
+        const keys = await redisClient.keys("feed:*");
         if (keys.length > 0) {
           await redisClient.del(keys);
         }
@@ -235,7 +235,7 @@ router.delete("/:id/comments/:commentId", auth, async (req, res) => {
     if (redisClient.isReady) {
       try {
         await redisClient.del(`userProfile:${post.user.toString()}`);
-        const keys = await redisClient.keys("posts:*");
+        const keys = await redisClient.keys("feed:*");
         if (keys.length > 0) {
           await redisClient.del(keys);
         }
@@ -252,12 +252,15 @@ router.delete("/:id/comments/:commentId", auth, async (req, res) => {
   }
 });
 
-// GET FEED (latest posts)
+// GET SMART FEED (latest + priority scoring)
 router.get("/", auth, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const cacheKey = `posts:${page}:${limit}`;
+    const currentUserId = req.user._id;
+
+    // Cache key now isolates dynamically per user due to unique feed rankings
+    const cacheKey = `feed:${currentUserId}:${page}:${limit}`;
 
     if (redisClient.isReady) {
       try {
@@ -270,22 +273,45 @@ router.get("/", auth, async (req, res) => {
       }
     }
 
-    const posts = await Post.find()
-      .populate("user", "username profilePic")
-      .populate("comments.user", "username profilePic")
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit);
+    const User = require("../models/User");
+    const currentUserTracker = await User.findById(currentUserId).select("following");
+    const followingIds = currentUserTracker.following || [];
+
+    // Smart Pipeline: Score followed users higher but maintain standard explore pools!
+    const pipeline = [
+      {
+        $addFields: {
+          priorityScore: {
+            $cond: {
+              if: { $in: ["$user", followingIds] },
+              then: 10,
+              else: 0
+            }
+          }
+        }
+      },
+      { $sort: { priorityScore: -1, createdAt: -1 } },
+      { $skip: (page - 1) * limit },
+      { $limit: limit }
+    ];
+
+    let queryResults = await Post.aggregate(pipeline);
+
+    // Mongoose Aggregation strips standard populate bindings; mapping manually natively
+    queryResults = await Post.populate(queryResults, [
+        { path: "user", select: "username profilePic" },
+        { path: "comments.user", select: "username profilePic" }
+    ]);
 
     if (redisClient.isReady) {
       try {
-        await redisClient.setEx(cacheKey, 60, JSON.stringify(posts));
+        await redisClient.setEx(cacheKey, 60, JSON.stringify(queryResults));
       } catch (redisErr) {
         console.error("Redis Set Error:", redisErr);
       }
     }
 
-    res.json(posts);
+    res.json(queryResults);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

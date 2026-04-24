@@ -4,6 +4,7 @@ import api from "../api/axios";
 import { AuthContext } from "../context/AuthContext";
 import getImageUrl from "../utils/getImageUrl";
 import formatTime from "../utils/formatTime";
+import FollowListModal from "../components/profile/FollowListModal";
 import "./UserProfile.css";
 
 // SVG UI Components
@@ -28,6 +29,9 @@ export default function UserProfile() {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isFollowing, setIsFollowing] = useState(false);
+
+    // Modal Interaction
+    const [modalConfig, setModalConfig] = useState({ isOpen: false, type: "" });
 
     // Interaction states
     const [activeComments, setActiveComments] = useState(null);
@@ -54,17 +58,28 @@ export default function UserProfile() {
     }, [id, currentUser]);
 
     const handleFollow = async () => {
+        // Optimistic UI Shift natively
+        const previousState = isFollowing;
+        setIsFollowing(!previousState);
+        setProfileData(prev => ({
+            ...prev,
+            followers: !previousState
+                ? [...(prev.followers || []), currentUser._id || currentUser.id]
+                : (prev.followers || []).filter(uid => uid !== (currentUser._id || currentUser.id))
+        }));
+
         try {
-            const res = await api.post(`/users/${id}/follow`);
-            setIsFollowing(res.data.following);
-            setProfileData(prev => ({
-                ...prev,
-                followers: res.data.following
-                    ? [...prev.followers, currentUser._id || currentUser.id]
-                    : prev.followers.filter(uid => uid !== (currentUser._id || currentUser.id))
-            }));
+            await api.post(`/users/${id}/follow`);
         } catch (err) {
             console.error("Failed to follow/unfollow:", err);
+            // Revert on failure
+            setIsFollowing(previousState);
+            setProfileData(prev => ({
+                ...prev,
+                followers: previousState
+                    ? [...(prev.followers || []), currentUser._id || currentUser.id]
+                    : (prev.followers || []).filter(uid => uid !== (currentUser._id || currentUser.id))
+            }));
         }
     };
 
@@ -175,8 +190,20 @@ export default function UserProfile() {
 
                     <div className="profile-stats">
                         <span className="profile-stat-item"><strong>{posts.length}</strong> posts</span>
-                        <span className="profile-stat-item"><strong>{profileData.followers?.length || 0}</strong> followers</span>
-                        <span className="profile-stat-item"><strong>{profileData.following?.length || 0}</strong> following</span>
+                        <span 
+                            className="profile-stat-item" 
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => setModalConfig({ isOpen: true, type: "followers" })}
+                        >
+                            <strong>{profileData.followers?.length || 0}</strong> followers
+                        </span>
+                        <span 
+                            className="profile-stat-item" 
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => setModalConfig({ isOpen: true, type: "following" })}
+                        >
+                            <strong>{profileData.following?.length || 0}</strong> following
+                        </span>
                     </div>
 
                     <div className="profile-bio">
@@ -301,6 +328,13 @@ export default function UserProfile() {
                     })
                 )}
             </section>
+
+            <FollowListModal
+                isOpen={modalConfig.isOpen}
+                type={modalConfig.type}
+                userId={profileData._id}
+                onClose={() => setModalConfig({ isOpen: false, type: "" })}
+            />
         </div>
     );
 }
